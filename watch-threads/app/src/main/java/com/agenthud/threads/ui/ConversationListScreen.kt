@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -143,23 +144,23 @@ private fun ConversationRow(c: Conversation, nowMs: Long, onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             ProviderLogo(c.provider, 14.dp)
             Spacer(Modifier.width(5.dp))
-            Text(
-                badgeLabel,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (c.project.isNotBlank()) ProjectPillInk else InkDim,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(if (c.project.isNotBlank()) ProjectPillBg else Surface2)
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            )
-            Spacer(Modifier.weight(1f))
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                Text(
+                    badgeLabel,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (c.project.isNotBlank()) ProjectPillInk else InkDim,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .background(if (c.project.isNotBlank()) ProjectPillBg else Surface2)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                )
+            }
             Spacer(Modifier.width(5.dp))
             when {
                 c.isWaiting -> Text("Needs you", fontSize = 10.sp, color = SignalAmber, fontWeight = FontWeight.SemiBold)
