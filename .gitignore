@@ -1,0 +1,28 @@
+# Android / Wear OS build outputs
+watch-threads/app/build/
+watch-threads/build/
+watch-threads/.gradle/
+watch-threads/.kotlin/
+watch-threads/local.properties
+*.apk
+*.aab
+
+# Cloudflare Worker relay
+relay/node_modules/
+relay/.wrangler/
+relay/.dev.vars
+
+# Secrets & signing
+.env
+.env.*
+*.pem
+*.p12
+*.keystore
+*.jks
+
+# Editors & OS
+.DS_Store
+.idea/
+.vscode/
+*.iml
+*.log

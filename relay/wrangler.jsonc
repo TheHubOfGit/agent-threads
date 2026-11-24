@@ -1,0 +1,15 @@
+{
+  // Agent Threads relay: lets the wrist app reach the Mac's bridge from any network.
+  // The Mac keeps an outbound WebSocket to one Durable Object; the watch's HTTPS requests are
+  // forwarded through it. Nothing on the home network is opened to the internet.
+  "name": "agent-threads-relay",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-01",
+  "durable_objects": {
+    "bindings": [{ "name": "RELAY", "class_name": "MacRelay" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["MacRelay"] }],
+  "observability": { "enabled": true }
+  // Secret (not in this file): TOKEN_SHA256 = sha256 hex of the bridge token.
+  //   wrangler secret put TOKEN_SHA256
+}

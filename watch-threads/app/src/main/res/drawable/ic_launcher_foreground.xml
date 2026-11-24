@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Agent Threads icon, foreground layer: a white message bubble with an amber "needs you" dot.
+  Drawn in the 96-unit design grid and scaled into the adaptive icon's 72dp visible circle
+  (x' = 0.75x + 18), well inside the safe zone.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:scaleX="0.75" android:scaleY="0.75" android:translateX="18" android:translateY="18">
+        <path android:fillColor="#FFF4F5F7"
+            android:pathData="M35,32h26a7,7 0,0 1,7 7v13a7,7 0,0 1,-7 7H47l-9,8v-8h-3a7,7 0,0 1,-7 -7V39a7,7 0,0 1,7 -7z" />
+        <path android:fillColor="#FFF2B441" android:strokeColor="#FF111318" android:strokeWidth="2.5"
+            android:pathData="M62,34m-5.5,0a5.5,5.5 0,1 1,11 0a5.5,5.5 0,1 1,-11 0" />
+    </group>
+</vector>
