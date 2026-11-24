@@ -1,4 +1,4 @@
-# Agent Threads
+# <img src="docs/icon.png" width="36" height="36" align="absmiddle" alt="" /> Agent Threads
 
 A Wear OS wrist app and Cloudflare Workers relay for continuing ongoing AI coding agent conversations (**T3 Code**, **Claude Code**, **Codex**, and **Antigravity**) on the go.
 
