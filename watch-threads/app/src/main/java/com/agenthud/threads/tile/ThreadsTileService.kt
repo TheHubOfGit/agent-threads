@@ -4,7 +4,6 @@ import androidx.concurrent.futures.CallbackToFutureAdapter
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders.dp
-import androidx.wear.protolayout.DimensionBuilders.em
 import androidx.wear.protolayout.DimensionBuilders.expand
 import androidx.wear.protolayout.DimensionBuilders.sp
 import androidx.wear.protolayout.DimensionBuilders.wrap
@@ -44,8 +43,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Minimal Wear OS Tile (Option 2: Bezel-Hugging Pills) showing the latest 3 conversations.
- * Tap any pill to jump straight into that conversation, or tap THREADS to open the full list.
+ * Material 3 Expressive Wear OS Tile showing the latest 3 conversations in chunky,
+ * provider-tinted tonal containers with an edge-hugging bottom "More" button.
  */
 class ThreadsTileService : TileService() {
 
@@ -103,76 +102,162 @@ class ThreadsTileService : TileService() {
         )
         .build()
 
+    private data class M3Colors(val container: Int, val iconBg: Int, val title: Int, val sub: Int, val dot: Int)
+
+    private fun colorsFor(c: Conversation): M3Colors = when {
+        c.isWaiting -> M3Colors(
+            container = 0xFF4A320A.toInt(),
+            iconBg = 0xFF6B4810.toInt(),
+            title = 0xFFFFF0C2.toInt(),
+            sub = 0xFFF2B441.toInt(),
+            dot = 0xFFF2B441.toInt()
+        )
+        c.provider.equals("claude", true) -> M3Colors(
+            container = 0xFF3E2218.toInt(),
+            iconBg = 0xFF5A3324.toInt(),
+            title = 0xFFFFE5DB.toInt(),
+            sub = 0xFFE3A994.toInt(),
+            dot = 0xFFD97757.toInt()
+        )
+        c.provider.equals("codex", true) -> M3Colors(
+            container = 0xFF232752.toInt(),
+            iconBg = 0xFF353B75.toInt(),
+            title = 0xFFE3E6FF.toInt(),
+            sub = 0xFFAAB2F5.toInt(),
+            dot = 0xFF7A84FF.toInt()
+        )
+        c.provider.equals("antigravity", true) -> M3Colors(
+            container = 0xFF0E2D5C.toInt(),
+            iconBg = 0xFF1A4585.toInt(),
+            title = 0xFFD9EBFF.toInt(),
+            sub = 0xFF8AB4F8.toInt(),
+            dot = 0xFF3D8BFF.toInt()
+        )
+        else -> M3Colors(
+            container = 0xFF242933.toInt(),
+            iconBg = 0xFF363D4A.toInt(),
+            title = 0xFFF0F2F5.toInt(),
+            sub = 0xFFAAB0BA.toInt(),
+            dot = 0xFFD5D8DD.toInt()
+        )
+    }
+
     private fun buildRoot(convs: List<Conversation>, nowMs: Long, screenW: Float): LayoutElementBuilders.LayoutElement {
         val col = Column.Builder()
             .setWidth(expand())
-            .setHeight(wrap())
+            .setHeight(expand())
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
 
-        // Quiet "THREADS" header (tapping opens the full list)
+        // Material 3 Expressive top title
         col.addContent(
             Text.Builder()
-                .setText("THREADS")
+                .setText("Threads")
                 .setFontStyle(
                     FontStyle.Builder()
-                        .setSize(sp(11f))
+                        .setSize(sp(16f))
                         .setWeight(LayoutElementBuilders.FONT_WEIGHT_BOLD)
-                        .setColor(argb(0xFF6B7280.toInt()))
-                        .setLetterSpacing(em(0.08f))
+                        .setColor(argb(0xFFFFFFFF.toInt()))
                         .build()
                 )
                 .setModifiers(
                     Modifiers.Builder()
                         .setClickable(openAppClickable(null))
-                        .setPadding(Padding.Builder().setBottom(dp(12f)).build())
+                        .setPadding(Padding.Builder().setTop(dp(14f)).setBottom(dp(8f)).build())
                         .build()
                 )
                 .build()
         )
 
+        // Center stack of up to 3 chunky M3 tonal cards
+        val stack = Column.Builder()
+            .setWidth(expand())
+            .setHeight(wrap())
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+
         if (convs.isEmpty()) {
-            col.addContent(
+            stack.addContent(
                 Box.Builder()
-                    .setWidth(dp(screenW * 0.80f))
-                    .setHeight(wrap())
+                    .setWidth(dp(screenW * 0.84f))
+                    .setHeight(dp(56f))
                     .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                    .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
                     .setModifiers(
                         Modifiers.Builder()
                             .setClickable(openAppClickable(null))
                             .setBackground(
                                 Background.Builder()
-                                    .setColor(argb(0xFF14171C.toInt()))
-                                    .setCorner(Corner.Builder().setRadius(dp(99f)).build())
+                                    .setColor(argb(0xFF242933.toInt()))
+                                    .setCorner(Corner.Builder().setRadius(dp(24f)).build())
                                     .build()
                             )
-                            .setPadding(Padding.Builder().setStart(dp(14f)).setEnd(dp(14f)).setTop(dp(13f)).setBottom(dp(13f)).build())
                             .build()
                     )
                     .addContent(
                         Text.Builder()
                             .setText("Open Agent Threads")
-                            .setFontStyle(FontStyle.Builder().setSize(sp(14f)).setColor(argb(0xFFB8BBBF.toInt())).build())
+                            .setFontStyle(FontStyle.Builder().setSize(sp(14f)).setColor(argb(0xFFE8EAED.toInt())).build())
                             .build()
                     )
                     .build()
             )
         } else {
             val top3 = convs.take(3)
-            val wideW = screenW * 0.92f
-            val taperedW = screenW * 0.80f
+            val wideW = screenW * 0.90f
+            val taperedW = screenW * 0.82f
             top3.forEachIndexed { idx, c ->
-                if (idx > 0) col.addContent(Spacer.Builder().setHeight(dp(8f)).build())
-                // Top and bottom pills taper slightly to hug the round watch bezel.
-                val pillWidth = if (top3.size == 3 && idx == 1) wideW else taperedW
-                col.addContent(buildPill(c, nowMs, pillWidth))
+                if (idx > 0) stack.addContent(Spacer.Builder().setHeight(dp(6f)).build())
+                val cardW = if (top3.size == 3 && idx == 1) wideW else taperedW
+                stack.addContent(buildCard(c, nowMs, cardW))
             }
         }
+
+        col.addContent(
+            Box.Builder()
+                .setWidth(expand())
+                .setHeight(expand())
+                .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                .addContent(stack.build())
+                .build()
+        )
+
+        // Edge-hugging bottom M3 "More" pill
+        col.addContent(
+            Box.Builder()
+                .setWidth(dp(screenW * 0.46f))
+                .setHeight(dp(34f))
+                .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                .setModifiers(
+                    Modifiers.Builder()
+                        .setClickable(openAppClickable(null))
+                        .setBackground(
+                            Background.Builder()
+                                .setColor(argb(0xFF343840.toInt()))
+                                .setCorner(Corner.Builder().setRadius(dp(99f)).build())
+                                .build()
+                        )
+                        .build()
+                )
+                .addContent(
+                    Text.Builder()
+                        .setText("More")
+                        .setFontStyle(
+                            FontStyle.Builder()
+                                .setSize(sp(13f))
+                                .setWeight(LayoutElementBuilders.FONT_WEIGHT_MEDIUM)
+                                .setColor(argb(0xFFE8EAED.toInt()))
+                                .build()
+                        )
+                        .build()
+                )
+                .build()
+        )
+        col.addContent(Spacer.Builder().setHeight(dp(6f)).build())
 
         return Box.Builder()
             .setWidth(expand())
             .setHeight(expand())
-            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
-            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
             .setModifiers(
                 Modifiers.Builder()
                     .setBackground(Background.Builder().setColor(argb(0xFF000000.toInt())).build())
@@ -182,7 +267,8 @@ class ThreadsTileService : TileService() {
             .build()
     }
 
-    private fun buildPill(c: Conversation, nowMs: Long, widthDp: Float): LayoutElementBuilders.LayoutElement {
+    private fun buildCard(c: Conversation, nowMs: Long, widthDp: Float): LayoutElementBuilders.LayoutElement {
+        val colors = colorsFor(c)
         val row = Row.Builder()
             .setWidth(expand())
             .setHeight(wrap())
@@ -197,80 +283,101 @@ class ThreadsTileService : TileService() {
         }
         if (iconId != null) {
             row.addContent(
-                Image.Builder()
-                    .setResourceId(iconId)
-                    .setWidth(dp(18f))
-                    .setHeight(dp(18f))
+                Box.Builder()
+                    .setWidth(dp(26f))
+                    .setHeight(dp(26f))
+                    .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                    .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                    .setModifiers(
+                        Modifiers.Builder()
+                            .setBackground(
+                                Background.Builder()
+                                    .setColor(argb(colors.iconBg))
+                                    .setCorner(Corner.Builder().setRadius(dp(13f)).build())
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .addContent(
+                        Image.Builder()
+                            .setResourceId(iconId)
+                            .setWidth(dp(15f))
+                            .setHeight(dp(15f))
+                            .build()
+                    )
                     .build()
             )
             row.addContent(Spacer.Builder().setWidth(dp(8f)).build())
         }
 
-        // Title fills remaining width inside the pill
-        row.addContent(
-            Box.Builder()
-                .setWidth(expand())
-                .setHeight(wrap())
-                .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_START)
-                .addContent(
-                    Text.Builder()
-                        .setText(c.title)
-                        .setMaxLines(1)
-                        .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
-                        .setFontStyle(
-                            FontStyle.Builder()
-                                .setSize(sp(15f))
-                                .setWeight(LayoutElementBuilders.FONT_WEIGHT_MEDIUM)
-                                .setColor(argb(0xFFE8EAED.toInt()))
-                                .build()
-                        )
-                        .build()
-                )
-                .build()
-        )
-
-        row.addContent(Spacer.Builder().setWidth(dp(8f)).build())
-
-        // Right-aligned status dot or short timestamp
-        when {
-            c.isWaiting -> row.addContent(statusDot(0xFFF2B441.toInt()))
-            c.isRunning -> row.addContent(statusDot(providerAccentArgb(c.provider)))
-            c.isError -> row.addContent(statusDot(0xFFF28B82.toInt()))
-            else -> row.addContent(
+        // Title + quiet project/status subtitle
+        val textCol = Column.Builder()
+            .setWidth(expand())
+            .setHeight(wrap())
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_START)
+            .addContent(
                 Text.Builder()
-                    .setText(shortAgo(c.updatedAtMs, nowMs))
+                    .setText(c.title)
                     .setMaxLines(1)
+                    .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
                     .setFontStyle(
                         FontStyle.Builder()
-                            .setSize(sp(12f))
-                            .setColor(argb(0xFF6E747C.toInt()))
+                            .setSize(sp(13.5f))
+                            .setWeight(LayoutElementBuilders.FONT_WEIGHT_BOLD)
+                            .setColor(argb(colors.title))
                             .build()
                     )
                     .build()
             )
+        val subText = when {
+            c.isWaiting -> if (c.project.isNotBlank()) "${c.project} · Needs you" else "Needs you"
+            c.isRunning -> if (c.project.isNotBlank()) "${c.project} · Working" else "Working"
+            c.project.isNotBlank() -> "${c.project} · ${shortAgo(c.updatedAtMs, nowMs)}"
+            else -> shortAgo(c.updatedAtMs, nowMs)
+        }
+        if (subText.isNotBlank()) {
+            textCol.addContent(
+                Text.Builder()
+                    .setText(subText)
+                    .setMaxLines(1)
+                    .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
+                    .setFontStyle(
+                        FontStyle.Builder()
+                            .setSize(sp(10.5f))
+                            .setColor(argb(colors.sub))
+                            .build()
+                    )
+                    .build()
+            )
+        }
+        row.addContent(textCol.build())
+
+        if (c.isWaiting || c.isRunning || c.isError) {
+            row.addContent(Spacer.Builder().setWidth(dp(6f)).build())
+            row.addContent(statusDot(if (c.isError) 0xFFF28B82.toInt() else colors.dot))
         }
 
         val mods = Modifiers.Builder()
             .setClickable(openAppClickable(c.id))
             .setBackground(
                 Background.Builder()
-                    .setColor(argb(0xFF14171C.toInt()))
-                    .setCorner(Corner.Builder().setRadius(dp(99f)).build())
+                    .setColor(argb(colors.container))
+                    .setCorner(Corner.Builder().setRadius(dp(22f)).build())
                     .build()
             )
             .setPadding(
                 Padding.Builder()
-                    .setStart(dp(14f))
-                    .setEnd(dp(14f))
-                    .setTop(dp(13f))
-                    .setBottom(dp(13f))
+                    .setStart(dp(9f))
+                    .setEnd(dp(12f))
+                    .setTop(dp(8f))
+                    .setBottom(dp(8f))
                     .build()
             )
         if (c.isWaiting) {
             mods.setBorder(
                 Border.Builder()
                     .setWidth(dp(1.5f))
-                    .setColor(argb(0xB3F2B441.toInt()))
+                    .setColor(argb(0xCCF2B441.toInt()))
                     .build()
             )
         }
@@ -297,14 +404,6 @@ class ThreadsTileService : TileService() {
                 .build()
         )
         .build()
-
-    private fun providerAccentArgb(provider: String): Int = when (provider.lowercase()) {
-        "claude" -> 0xFFD97757.toInt()
-        "codex" -> 0xFF7A84FF.toInt()
-        "antigravity" -> 0xFF3D8BFF.toInt()
-        "t3code" -> 0xFFD5D8DD.toInt()
-        else -> 0xFF8AB4F8.toInt()
-    }
 
     private fun openAppClickable(threadId: String?): Clickable {
         val act = ActionBuilders.AndroidActivity.Builder()
