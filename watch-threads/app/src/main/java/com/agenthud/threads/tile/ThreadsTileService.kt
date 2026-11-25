@@ -65,6 +65,7 @@ class ThreadsTileService : TileService() {
                     api.listConversations(3).getOrNull()
                 }.orEmpty()
                 val nowMs = System.currentTimeMillis() + api.clockOffsetMs.value
+                val screenW = requestParams.deviceConfiguration.screenWidthDp.takeIf { it > 0 }?.toFloat() ?: 272f
                 val tile = TileBuilders.Tile.Builder()
                     .setResourcesVersion(RESOURCES_VERSION)
                     .setFreshnessIntervalMillis(120_000L)
@@ -72,7 +73,7 @@ class ThreadsTileService : TileService() {
                         Timeline.Builder()
                             .addTimelineEntry(
                                 TimelineEntry.Builder()
-                                    .setLayout(Layout.Builder().setRoot(buildRoot(convs, nowMs)).build())
+                                    .setLayout(Layout.Builder().setRoot(buildRoot(convs, nowMs, screenW)).build())
                                     .build()
                             )
                             .build()
@@ -102,7 +103,7 @@ class ThreadsTileService : TileService() {
         )
         .build()
 
-    private fun buildRoot(convs: List<Conversation>, nowMs: Long): LayoutElementBuilders.LayoutElement {
+    private fun buildRoot(convs: List<Conversation>, nowMs: Long, screenW: Float): LayoutElementBuilders.LayoutElement {
         val col = Column.Builder()
             .setWidth(expand())
             .setHeight(wrap())
@@ -114,7 +115,7 @@ class ThreadsTileService : TileService() {
                 .setText("THREADS")
                 .setFontStyle(
                     FontStyle.Builder()
-                        .setSize(sp(9.5f))
+                        .setSize(sp(11f))
                         .setWeight(LayoutElementBuilders.FONT_WEIGHT_BOLD)
                         .setColor(argb(0xFF6B7280.toInt()))
                         .setLetterSpacing(em(0.08f))
@@ -123,7 +124,7 @@ class ThreadsTileService : TileService() {
                 .setModifiers(
                     Modifiers.Builder()
                         .setClickable(openAppClickable(null))
-                        .setPadding(Padding.Builder().setBottom(dp(8f)).build())
+                        .setPadding(Padding.Builder().setBottom(dp(12f)).build())
                         .build()
                 )
                 .build()
@@ -132,7 +133,7 @@ class ThreadsTileService : TileService() {
         if (convs.isEmpty()) {
             col.addContent(
                 Box.Builder()
-                    .setWidth(dp(168f))
+                    .setWidth(dp(screenW * 0.80f))
                     .setHeight(wrap())
                     .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
                     .setModifiers(
@@ -144,23 +145,25 @@ class ThreadsTileService : TileService() {
                                     .setCorner(Corner.Builder().setRadius(dp(99f)).build())
                                     .build()
                             )
-                            .setPadding(Padding.Builder().setStart(dp(12f)).setEnd(dp(12f)).setTop(dp(10f)).setBottom(dp(10f)).build())
+                            .setPadding(Padding.Builder().setStart(dp(14f)).setEnd(dp(14f)).setTop(dp(13f)).setBottom(dp(13f)).build())
                             .build()
                     )
                     .addContent(
                         Text.Builder()
                             .setText("Open Agent Threads")
-                            .setFontStyle(FontStyle.Builder().setSize(sp(12f)).setColor(argb(0xFFB8BBBF.toInt())).build())
+                            .setFontStyle(FontStyle.Builder().setSize(sp(14f)).setColor(argb(0xFFB8BBBF.toInt())).build())
                             .build()
                     )
                     .build()
             )
         } else {
             val top3 = convs.take(3)
+            val wideW = screenW * 0.92f
+            val taperedW = screenW * 0.80f
             top3.forEachIndexed { idx, c ->
-                if (idx > 0) col.addContent(Spacer.Builder().setHeight(dp(6f)).build())
+                if (idx > 0) col.addContent(Spacer.Builder().setHeight(dp(8f)).build())
                 // Top and bottom pills taper slightly to hug the round watch bezel.
-                val pillWidth = if (top3.size == 3 && idx == 1) 186f else 166f
+                val pillWidth = if (top3.size == 3 && idx == 1) wideW else taperedW
                 col.addContent(buildPill(c, nowMs, pillWidth))
             }
         }
@@ -196,11 +199,11 @@ class ThreadsTileService : TileService() {
             row.addContent(
                 Image.Builder()
                     .setResourceId(iconId)
-                    .setWidth(dp(13f))
-                    .setHeight(dp(13f))
+                    .setWidth(dp(18f))
+                    .setHeight(dp(18f))
                     .build()
             )
-            row.addContent(Spacer.Builder().setWidth(dp(6f)).build())
+            row.addContent(Spacer.Builder().setWidth(dp(8f)).build())
         }
 
         // Title fills remaining width inside the pill
@@ -216,7 +219,7 @@ class ThreadsTileService : TileService() {
                         .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
                         .setFontStyle(
                             FontStyle.Builder()
-                                .setSize(sp(12f))
+                                .setSize(sp(15f))
                                 .setWeight(LayoutElementBuilders.FONT_WEIGHT_MEDIUM)
                                 .setColor(argb(0xFFE8EAED.toInt()))
                                 .build()
@@ -226,7 +229,7 @@ class ThreadsTileService : TileService() {
                 .build()
         )
 
-        row.addContent(Spacer.Builder().setWidth(dp(6f)).build())
+        row.addContent(Spacer.Builder().setWidth(dp(8f)).build())
 
         // Right-aligned status dot or short timestamp
         when {
@@ -239,7 +242,7 @@ class ThreadsTileService : TileService() {
                     .setMaxLines(1)
                     .setFontStyle(
                         FontStyle.Builder()
-                            .setSize(sp(10f))
+                            .setSize(sp(12f))
                             .setColor(argb(0xFF6E747C.toInt()))
                             .build()
                     )
@@ -257,17 +260,17 @@ class ThreadsTileService : TileService() {
             )
             .setPadding(
                 Padding.Builder()
-                    .setStart(dp(10f))
-                    .setEnd(dp(10f))
-                    .setTop(dp(8f))
-                    .setBottom(dp(8f))
+                    .setStart(dp(14f))
+                    .setEnd(dp(14f))
+                    .setTop(dp(13f))
+                    .setBottom(dp(13f))
                     .build()
             )
         if (c.isWaiting) {
             mods.setBorder(
                 Border.Builder()
-                    .setWidth(dp(1.2f))
-                    .setColor(argb(0xA6F2B441.toInt()))
+                    .setWidth(dp(1.5f))
+                    .setColor(argb(0xB3F2B441.toInt()))
                     .build()
             )
         }
@@ -281,14 +284,14 @@ class ThreadsTileService : TileService() {
     }
 
     private fun statusDot(colorArgb: Int) = Box.Builder()
-        .setWidth(dp(6f))
-        .setHeight(dp(6f))
+        .setWidth(dp(8f))
+        .setHeight(dp(8f))
         .setModifiers(
             Modifiers.Builder()
                 .setBackground(
                     Background.Builder()
                         .setColor(argb(colorArgb))
-                        .setCorner(Corner.Builder().setRadius(dp(3f)).build())
+                        .setCorner(Corner.Builder().setRadius(dp(4f)).build())
                         .build()
                 )
                 .build()
