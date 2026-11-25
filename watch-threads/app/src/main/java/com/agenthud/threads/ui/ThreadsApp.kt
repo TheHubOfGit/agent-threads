@@ -21,6 +21,17 @@ fun ThreadsApp(state: AppState) {
     val drafts = remember { mutableStateMapOf<String, String>() }
     fun enc(s: String) = Uri.encode(s)
 
+    val requestedThread = state.openThreadRequest.value
+    LaunchedEffect(requestedThread) {
+        if (!requestedThread.isNullOrBlank()) {
+            state.openThreadRequest.value = null
+            nav.navigate("conv/${enc(requestedThread)}") {
+                popUpTo("list") { inclusive = false }
+                launchSingleTop = true
+            }
+        }
+    }
+
     MaterialTheme {
         SwipeDismissableNavHost(navController = nav, startDestination = "list") {
             composable("list") {

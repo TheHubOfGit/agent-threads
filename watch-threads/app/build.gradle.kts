@@ -81,4 +81,8 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+    // Wear OS Tile (Option 2: minimal bezel-hugging 3-convo pills)
+    implementation("androidx.wear.tiles:tiles:1.4.0")
+    implementation("androidx.wear.protolayout:protolayout:1.2.1")
+    implementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
 }

@@ -33,6 +33,8 @@ class AppState(val api: BridgeApi, val prefs: Prefs, private val buzz: () -> Uni
     val listLoaded = mutableStateOf(false)
     val listError = mutableStateOf("")
     val filter = mutableStateOf(prefs.providerFilter)
+    /** Set when launched from the Wear OS Tile to jump straight into a specific conversation. */
+    val openThreadRequest = mutableStateOf<String?>(null)
 
     /**
      * Sends run here, not in a screen's scope: swiping away mid-send must not drop the result (the

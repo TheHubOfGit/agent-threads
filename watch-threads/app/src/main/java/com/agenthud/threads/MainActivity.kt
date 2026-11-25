@@ -88,6 +88,9 @@ class MainActivity : ComponentActivity() {
 
     /** Testing: `am start -n com.agenthud.threads/.MainActivity --es host 192.168.1.20:8765` ("" = automatic). */
     private fun applyHostExtra(intent: android.content.Intent?) {
+        intent?.getStringExtra("open_thread_id")?.takeIf { it.isNotBlank() }?.let {
+            state.openThreadRequest.value = it
+        }
         val raw = intent?.getStringExtra("host") ?: return
         val h = raw.substringBefore(':').trim()
         val p = raw.substringAfter(':', "").toIntOrNull() ?: BuildConfig.DEFAULT_PORT
