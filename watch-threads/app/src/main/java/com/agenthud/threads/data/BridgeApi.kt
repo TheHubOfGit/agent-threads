@@ -245,6 +245,9 @@ class BridgeApi(private val context: Context, private val prefs: Prefs) {
     fun startDiscovery() {
         if (discovery != null || prefs.hostPinned) return
         val mgr = context.getSystemService(Context.NSD_SERVICE) as? NsdManager ?: return
+        // Search only on Wi-Fi: off Wi-Fi the search goes through the phone's Bluetooth proxy,
+        // and the Android 17 phone answers it with a "Choose a device to connect" picker.
+        val wifi = wifiNetwork() ?: return
         nsd = mgr
         val listener = object : NsdManager.DiscoveryListener {
             override fun onDiscoveryStarted(regType: String) {}
@@ -276,7 +279,13 @@ class BridgeApi(private val context: Context, private val prefs: Prefs) {
             override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
         }
         discovery = listener
-        runCatching { mgr.discoverServices("_agenthud._tcp.", NsdManager.PROTOCOL_DNS_SD, listener) }
+        runCatching {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                mgr.discoverServices("_agenthud._tcp.", NsdManager.PROTOCOL_DNS_SD, wifi, { it.run() }, listener)
+            } else {
+                mgr.discoverServices("_agenthud._tcp.", NsdManager.PROTOCOL_DNS_SD, listener)
+            }
+        }
             .onFailure { discovery = null }
     }
 
@@ -298,10 +307,12 @@ class BridgeApi(private val context: Context, private val prefs: Prefs) {
         }
     }
 
-    fun onWifi(): Boolean {
-        val cm = context.getSystemService(ConnectivityManager::class.java) ?: return false
+    fun onWifi(): Boolean = wifiNetwork() != null
+
+    private fun wifiNetwork(): android.net.Network? {
+        val cm = context.getSystemService(ConnectivityManager::class.java) ?: return null
         @Suppress("DEPRECATION")
-        return cm.allNetworks.any { n ->
+        return cm.allNetworks.firstOrNull { n ->
             cm.getNetworkCapabilities(n)?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
         }
     }
